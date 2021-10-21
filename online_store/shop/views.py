@@ -4,6 +4,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from django.template.backends import django
+import random
 
 import shop
 from .models import *
@@ -150,10 +151,30 @@ def grade(request):
         return JsonResponse({"result": "оценка сохранена"})
 
 @csrf_exempt
-def oders(request):
+def orders(request):
     id = request.POST['id']
+    num = random.randint(0, 3)
+    value = ["в обработке","передан в доставку","исполнен","отменён"]
     good = Goods.objects.get(pk=id)
-    Users.objects.get(request.session['login'])
+    user = Users.objects.get(login=request.session['login'])
+    user.order_set.create(status=value[num],name_product=good.name_product,
+                          description=good.description,image_url=good.image_url,
+                          price=good.price,grade=good.grade,tegs=good.tegs)
+    return JsonResponse({"result": "заказ сохранён"})
+
+def orders_all(request):
+
+        user = Users.objects.get(login=request.session['login'])
+        orders = user.orders_set.all()
+        paginator = Paginator(orders, 4)
+        products_paginator = paginator.page(1)
+        goods = serialize('json', products_paginator)
+        return JsonResponse({"product": goods})
+
+
+
+
+
 
 
 

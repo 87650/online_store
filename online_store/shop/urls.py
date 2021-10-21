@@ -10,5 +10,7 @@ urlpatterns = [
     path('goods/categories/<str:category>/<str:page>', categories_page),
     path('goods/categories/<str:category>/<str:order>/<str:page>', categories_order_page),
     path('goods/categories/<str:category>/search', categories_page),
-    path('goods/grade', grade)
+    path('goods/grade', grade),
+    path('goods/orders/create', orders),
+    path('goods/orders/all', orders_all)
 ]
