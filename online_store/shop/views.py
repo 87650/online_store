@@ -4,6 +4,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from django.template.backends import django
+from django.shortcuts import redirect
 import random
 
 import shop
@@ -38,6 +39,17 @@ def authorization(request):
             break
         elif(model[len(model)-1].id == value.id):
             return JsonResponse({"result":"вы не вошли, неправильно введен логин, почта или пароль"})
+
+
+@csrf_exempt
+def exit(request):
+    if(request.session['login'] != None):
+        request.session['login'] = None
+        return redirect("goods/all/")
+    else:
+        return redirect("goods/all/")
+
+
 @csrf_exempt
 def all(request):
     try:
@@ -65,6 +77,35 @@ def all(request):
             goods = serialize('json', products_paginator)
             return JsonResponse({"product":goods})
 
+@csrf_exempt
+def goods_all_order(request,order):
+    goods = Goods().objects.all().order_by(order)
+    paginator = Paginator(goods, 4)
+    products_paginator = paginator.page(1)
+    goods = serialize('json', products_paginator)
+    return JsonResponse({"product": goods})
+
+@csrf_exempt
+def goods_all_page(request,page):
+    goods = Goods().objects.all()
+    paginator = Paginator(goods, 4)
+    products_paginator = paginator.page(page)
+    goods = serialize('json', products_paginator)
+    return JsonResponse({"product": goods})
+
+@csrf_exempt
+def goods_all_order_page(request,order,page):
+    goods = Goods().objects.all()
+    paginator = Paginator(goods, 4)
+    products_paginator = paginator.page(page)
+    goods = serialize('json', products_paginator)
+    return JsonResponse({"product": goods})
+@csrf_exempt
+def goods_search(request,order):
+    name = request.POST['name']
+    goods = Goods().objects.get(name=name)
+    goods = serialize('json', goods)
+    return JsonResponse({"product": goods})
 
 @csrf_exempt
 def categories(request,category):
@@ -97,7 +138,6 @@ def categories_order(request,category,order):
 @csrf_exempt
 def categories_page(request,category,page):
     try:
-
         cate = Categories.objects.get(name_category=category)
         goods = cate.goods_set.all()
         paginator = Paginator(goods, 4)
@@ -105,12 +145,11 @@ def categories_page(request,category,page):
         goods = serialize('json', products_paginator)
         return JsonResponse({"product": goods})
     except:
-        return JsonResponse({"result": "Категории : {0} не существует или вы неправильно ввели order - {1} ".format(category,order)})
+        return JsonResponse({"result": "Категории : {0} не существует".format(category)})
 
 @csrf_exempt
 def categories_order_page(request,category,order,page):
     try:
-
         cate = Categories.objects.get(name_category=category)
         goods = cate.goods_set.all().order_by(order)
         paginator = Paginator(goods, 4)
@@ -152,24 +191,98 @@ def grade(request):
 
 @csrf_exempt
 def orders(request):
-    id = request.POST['id']
-    num = random.randint(0, 3)
-    value = ["в обработке","передан в доставку","исполнен","отменён"]
-    good = Goods.objects.get(pk=id)
-    user = Users.objects.get(login=request.session['login'])
-    user.order_set.create(status=value[num],name_product=good.name_product,
-                          description=good.description,image_url=good.image_url,
-                          price=good.price,grade=good.grade,tegs=good.tegs)
-    return JsonResponse({"result": "заказ сохранён"})
-
-def orders_all(request):
-
+    if (request.session['login'] != None):
+        id = request.POST['id']
+        num = random.randint(0, 3)
+        value = ["в обработке","передан в доставку","исполнен","отменён"]
+        good = Goods.objects.get(pk=id)
         user = Users.objects.get(login=request.session['login'])
-        orders = user.orders_set.all()
+        user.order_set.create(status=value[num],name_product=good.name_product,
+                              description=good.description,image_url=good.image_url,
+                              price=good.price,grade=good.grade,tegs=good.tegs)
+        return JsonResponse({"result": "заказ сохранён"})
+    else:
+        return redirect("http://127.0.0.1:8000/authorization")
+
+@csrf_exempt
+def orders_all(request):
+    if (request.session['login'] != None):
+        user = Users.objects.get(login=request.session['login'])
+        orders = user.order_set.all()
         paginator = Paginator(orders, 4)
         products_paginator = paginator.page(1)
         goods = serialize('json', products_paginator)
         return JsonResponse({"product": goods})
+    else:
+        return redirect("http://127.0.0.1:8000/authorization")
+
+@csrf_exempt
+def orders_all_order(request,order):
+    if (request.session['login'] != None):
+        user = Users.objects.get(login=request.session['login'])
+        orders = user.order_set.all().order_by(order)
+        paginator = Paginator(orders, 4)
+        products_paginator = paginator.page(1)
+        goods = serialize('json', products_paginator)
+        return JsonResponse({"product": goods})
+    else:
+        return redirect("http://127.0.0.1:8000/authorization")
+
+@csrf_exempt
+def orders_all_page(request,page):
+    if (request.session['login'] != None):
+        user = Users.objects.get(login=request.session['login'])
+        orders = user.order_set.all()
+        paginator = Paginator(orders, 4)
+        products_paginator = paginator.page(page)
+        goods = serialize('json', products_paginator)
+        return JsonResponse({"product": goods})
+    else:
+        return redirect("http://127.0.0.1:8000/authorization")
+
+@csrf_exempt
+def orders_all_order_page(request,order,page):
+    if (request.session['login'] != None):
+        user = Users.objects.get(login=request.session['login'])
+        orders = user.order_set.all().order_by(order)
+        paginator = Paginator(orders, 4)
+        products_paginator = paginator.page(page)
+        goods = serialize('json', products_paginator)
+        return JsonResponse({"product": goods})
+    else:
+        return redirect("http://127.0.0.1:8000/authorization")
+
+@csrf_exempt
+def orders_search(request):
+    if(request.session['login'] != None):
+        name = request.POST['name']
+        user = Users.objects.get(login=request.session['login'])
+        orders = user.order_set.get(name_product=name)
+        goods = serialize('json', orders)
+        return JsonResponse({"product": goods})
+    else:
+        return redirect("http://127.0.0.1:8000/authorization")
+
+@csrf_exempt
+def favorites_add(request):
+    if (request.session['login'] != None):
+        id = request.POST['id']
+        goods = Goods.objects.filter(id=id)
+        goods = serialize('json', goods)
+        request.session['favorites'] = goods
+        return JsonResponse({"result": "сохранено"})
+    else:
+        return redirect("http://127.0.0.1:8000/authorization")
+
+@csrf_exempt
+def favorites(request):
+    if (request.session['login'] != None):
+        goods = request.session['favorites']
+        return JsonResponse({"product": goods})
+    else:
+        return redirect("http://127.0.0.1:8000/authorization")
+
+
 
 
 
